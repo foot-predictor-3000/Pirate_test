@@ -1065,7 +1065,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             await initDB();
             initWorker();
-            setStatus('Ready, Captain. Choose yer ocean and plunder the depths.', false);
+            setStatus('Choose yer ocean and plunder the depths.', false);
             apiKeyInput.value = localStorage.getItem('geminiApiKey') || '';
         });
         apiKeyInput.addEventListener('keyup', () => {
