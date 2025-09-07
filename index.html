@@ -645,7 +645,7 @@
         }
         
         function displayGeminiFixtures(fixtures) {
-            if (!fixtures || fixtures.length === 0) { fixturesContainer.innerHTML = '<p class="text-gray-500">No ships on the horizon in the next 7 days, Captain.</p>'; return; }
+            if (!fixtures || fixtures.length === 0) { fixturesContainer.innerHTML = '<p class="text-gray-500">No ships on the horizon in the next 7 days, Captain. Try again later.</p>'; return; }
             let html = '<div class="space-y-4">';
             fixtures.sort((a, b) => new Date(a.MatchDate) - new Date(b.MatchDate));
             fixtures.forEach((fixture, index) => {
