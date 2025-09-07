@@ -149,7 +149,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'football-predictor-v38-pirate-toggle'; /* Cache version updated */
+                    const CACHE_NAME = 'football-predictor-v39-pirate-confidence'; /* Cache version updated */
                     const urlsToCache = ['/'];
                     self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))); });
                     self.addEventListener('activate', event => { const cacheWhitelist = [CACHE_NAME]; event.waitUntil( caches.keys().then(cacheNames => Promise.all( cacheNames.map(cacheName => { if (cacheWhitelist.indexOf(cacheName) === -1) { return caches.delete(cacheName); } }) )).then(() => self.clients.claim()) ); });
@@ -930,10 +930,10 @@
                             </div>
                         </div>
                         <div> <h4 class="font-semibold text-gray-800">Tavern Rumors (News Summary):</h4> <p class="text-gray-600 italic">${analysis.newsSummary}</p> </div>
-                        <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
+                        <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right text-gray-900"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
                         <div class="space-y-2 bg-gray-100 p-2 rounded-md">
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Call (Stats):</span> <span class="font-bold text-right"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Call:</span> <span class="font-bold text-right"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Call (Stats):</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Call:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
                             <h4 class="font-bold">Treasure Hunt Analysis</h4>
@@ -996,14 +996,14 @@
             **Your Analysis Must Include:**
             1.  **Synthesis:** Directly compare the statistical data with the Captain's qualitative report. Do the injuries and news justify a deviation from the statistical baseline? Do the betting odds align with the Kraken or the Captain's refined view?
             2.  **Final Verdict:** State the most likely outcome (e.g., "Home Win," "Draw," "Away Win").
-            3.  **Confidence Level:** Assign a confidence level to your verdict: "High," "Medium," or "Low."
+            3.  **Confidence Level:** Assign a confidence level to your verdict. You MUST use one of these five options: "Very High," "High," "Medium," "Low," or "Very Low."
             4.  **Risk Assessment:** Briefly state the primary risk or potential for an upset (e.g., "The key risk is the away team's star striker returning from injury.").
 
             **Output Format:** Respond with a single, valid JSON object with NO MARKDOWN or other text outside the JSON structure. The object must contain these exact keys:
             {
               "synthesis": "Your concise analysis comparing the two reports.",
               "finalVerdict": "The most likely outcome.",
-              "confidence": "High, Medium, or Low.",
+              "confidence": "Very High, High, Medium, Low, or Very Low.",
               "riskAssessment": "A brief statement on the primary risk."
             }
             `;
@@ -1021,9 +1021,11 @@
 
                 // Display the Quartermaster's review
                 let confidenceColor = 'text-gray-700';
-                if (review.confidence === 'High') confidenceColor = 'text-green-700';
+                if (review.confidence === 'Very High') confidenceColor = 'text-green-700';
+                else if (review.confidence === 'High') confidenceColor = 'text-green-600';
                 else if (review.confidence === 'Medium') confidenceColor = 'text-orange-600';
                 else if (review.confidence === 'Low') confidenceColor = 'text-red-600';
+                else if (review.confidence === 'Very Low') confidenceColor = 'text-red-700';
 
                 quartermasterSection.innerHTML = `
                     <div class="space-y-3 text-sm bg-yellow-50 p-3 rounded-md border border-yellow-200 shadow">
@@ -1072,3 +1074,5 @@
     </script>
 </body>
 </html>
+
+
