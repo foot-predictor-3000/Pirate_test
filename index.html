@@ -39,8 +39,9 @@
         }
         /* Pirate theme background */
         body {
-            background-color: #f7fafc; /* Fallback color (gray-100) */
-            background-image: url("data:image/svg+xml,%3csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M24 8 C 17.37 8 12 13.37 12 20 L 12 28 C 12 30.21 13.79 32 16 32 L 18 32 L 18 36 L 30 36 L 30 32 L 32 32 C 34.21 32 36 30.21 36 28 L 36 20 C 36 13.37 30.63 8 24 8 Z M 20 22 C 21.1 22 22 22.9 22 24 C 22 25.1 21.1 26 20 26 C 18.9 26 18 25.1 18 24 C 18 22.9 18.9 22 20 22 Z M 28 22 C 29.1 22 30 22.9 30 24 C 30 25.1 29.1 26 28 26 C 26.9 26 26 25.1 26 24 C 26 22.9 26.9 22 28 22 Z' fill-opacity='0.05' fill='%232d3748'/%3e%3cpath d='M 12.68,31.32 L 35.32,40.68' stroke-width='3' stroke-opacity='0.05' stroke='%232d3748'/%3e%3cpath d='M 12.68,40.68 L 35.32,31.32' stroke-width='3' stroke-opacity='0.05' stroke='%232d3748'/%3e%3c/svg%3e");
+            background-color: #0a2d4d; /* Dark blue sea color */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w.org/2000/svg" width="200" height="200"><filter id="f" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="1" result="noise"/><feDiffuseLighting in="noise" lighting-color="%230d3a61" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23f)"/></svg>');
+            background-attachment: fixed; /* Keep the texture fixed during scroll */
         }
         /* Parchment style */
         .parchment {
@@ -48,11 +49,11 @@
             border: 1px solid #d2b48c; /* A tan border */
             box-shadow: inset 0 0 8px rgba(139, 69, 19, 0.2);
              /* Subtle fibrous texture using SVG */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="f1" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="5" seed="10"/></filter><rect width="100%" height="100%" filter="url(%23f1)" opacity="0.05"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w.org/2000/svg" width="100" height="100"><filter id="f1" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="5" seed="10"/></filter><rect width="100%" height="100%" filter="url(%23f1)" opacity="0.05"/></svg>');
         }
     </style>
 </head>
-<body class="font-english antialiased text-gray-800">
+<body class="font-english antialiased text-gray-200">
     <div id="root" class="container mx-auto p-4 max-w-3xl">
         <header class="parchment rounded-lg shadow-md p-6 mb-6 text-center">
             <h1 class="text-5xl font-pirata text-gray-900 text-center sm:text-left">Captain Turfbeard's Kraken brain powered football analyser</h1>
@@ -62,11 +63,11 @@
 
         <main>
             <div class="parchment rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-3xl font-pirata mb-2">Step 1: Stock the Larder</h2>
+                <h2 class="text-3xl font-pirata mb-2 text-gray-900">Step 1: Stock the Larder</h2>
                 <div class="flex flex-col sm:flex-row gap-4">
                     <div class="flex-grow">
                         <label for="league-select" class="block text-sm font-medium text-gray-700 mb-1">Select Sea Territory:</label>
-                        <select id="league-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <select id="league-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900">
                             <option value="E0">English Premier League</option>
                             <option value="E1">English Championship</option>
                             <option value="E2">English League 1</option>
@@ -98,7 +99,7 @@
             </div>
 
             <div class="parchment rounded-lg shadow-md p-6">
-                <h2 class="text-3xl font-pirata mb-4">Step 2: Gaze into the Abyss</h2>
+                <h2 class="text-3xl font-pirata mb-4 text-gray-900">Step 2: Gaze into the Abyss</h2>
                 <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <label for="api-key-input" class="block text-sm font-medium text-gray-700 mb-1">Enter yer Secret Key (Gemini API Key):</label>
                     <input type="password" id="api-key-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Your key is kept safe in the crow's nest">
@@ -114,7 +115,7 @@
             </div>
         </main>
 
-        <footer class="text-center text-xs text-gray-500 mt-8">
+        <footer class="text-center text-xs text-gray-400 mt-8">
             <p>Data plundered from football-data.co.uk. Predictions be for entertainment only.</p>
         </footer>
     </div>
@@ -148,7 +149,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'football-predictor-v36-pirate-qmaster'; /* Cache version updated */
+                    const CACHE_NAME = 'football-predictor-v37-pirate-flow'; /* Cache version updated */
                     const urlsToCache = ['/'];
                     self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))); });
                     self.addEventListener('activate', event => { const cacheWhitelist = [CACHE_NAME]; event.waitUntil( caches.keys().then(cacheNames => Promise.all( cacheNames.map(cacheName => { if (cacheWhitelist.indexOf(cacheName) === -1) { return caches.delete(cacheName); } }) )).then(() => self.clients.claim()) ); });
@@ -655,16 +656,20 @@
                 html += `
                     <div class="p-4 bg-gray-50 rounded-lg space-y-3">
                         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="text-center sm:text-left"> <p class="font-bold text-lg">${homeTeam} vs ${awayTeam}</p> <p class="text-sm text-gray-500">${formattedDate}</p> </div>
+                            <div class="text-center sm:text-left"> <p class="font-bold text-lg text-gray-900">${homeTeam} vs ${awayTeam}</p> <p class="text-sm text-gray-500">${formattedDate}</p> </div>
                             <div class="flex items-center gap-2 flex-wrap justify-center">
-                                <div id="prediction-${index}" class="text-sm font-semibold text-center w-full" data-prediction-values=""></div>
+                                <div id="prediction-${index}" class="text-sm font-semibold text-center w-full text-gray-800" data-prediction-values=""></div>
                                 <button id="predict-btn-${index}" onclick="runPrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="predict-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm" ${!modelsTrained ? 'disabled' : ''}>Forecast</button>
-                                <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-md text-sm opacity-50 cursor-not-allowed" disabled>Pirate Intel</button>
-                                <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-3 rounded-md text-sm opacity-50 cursor-not-allowed" disabled>Quartermaster's Ledger</button>
                             </div>
                         </div>
                         <div id="reasoning-${index}" class="w-full pt-3 border-t border-gray-200 hidden"></div>
+                        <div id="refine-btn-container-${index}" class="mt-4 text-center hidden">
+                            <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Pirate Intel</button>
+                        </div>
                         <div id="refined-section-${index}" class="hidden w-full pt-3 border-t border-gray-200" data-captain-intel=""></div>
+                        <div id="quartermaster-btn-container-${index}" class="mt-4 text-center hidden">
+                             <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Quartermaster's Ledger</button>
+                        </div>
                         <div id="quartermaster-section-${index}" class="hidden w-full pt-3 border-t border-gray-200"></div>
                     </div>
                 `;
@@ -691,12 +696,13 @@
 
         async function runPrediction(homeTeam, awayTeam, index) {
             const predictionEl = document.getElementById(`prediction-${index}`);
-            const refineBtn = document.getElementById(`refine-btn-${index}`);
             predictionEl.innerHTML = '<div class="flex items-center justify-center"><div class="spinner"></div></div>';
-            refineBtn.classList.add('opacity-50', 'cursor-not-allowed'); refineBtn.disabled = true;
+            
+            // Hide all subsequent sections when a new prediction is run
             document.getElementById(`reasoning-${index}`).classList.add('hidden');
-            // Hide subsequent analysis sections if re-running prediction
+            document.getElementById(`refine-btn-container-${index}`).classList.add('hidden');
             document.getElementById(`refined-section-${index}`).classList.add('hidden');
+            document.getElementById(`quartermaster-btn-container-${index}`).classList.add('hidden');
             document.getElementById(`quartermaster-section-${index}`).classList.add('hidden');
 
             if (!modelsTrained) {
@@ -739,8 +745,8 @@
                 </div>
             `;
             
-            refineBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            refineBtn.disabled = false;
+            // Show the container for the "Pirate Intel" button
+            document.getElementById(`refine-btn-container-${index}`).classList.remove('hidden');
         }
 
         function displayStatisticalReasoning(index, homeTeam, awayTeam, stats) {
@@ -777,10 +783,12 @@
             if (!apiKey) { setGeminiStatus('<span class="text-red-500">Ye need a secret key to use the spyglass!</span>', false); return; }
             
             const refinedSection = document.getElementById(`refined-section-${index}`);
-            const quartermasterBtn = document.getElementById(`quartermaster-btn-${index}`);
+            
             refinedSection.innerHTML = '<div class="flex items-center text-sm text-gray-500"><div class="spinner mr-2"></div>Listening to tavern rumors...</div>';
             refinedSection.classList.remove('hidden');
-            quartermasterBtn.classList.add('opacity-50', 'cursor-not-allowed'); quartermasterBtn.disabled = true;
+            
+            // Hide the quartermaster sections until ready
+            document.getElementById(`quartermaster-btn-container-${index}`).classList.add('hidden');
             document.getElementById(`quartermaster-section-${index}`).classList.add('hidden');
 
             const predictionEl = document.getElementById(`prediction-${index}`);
@@ -907,8 +915,7 @@
                 `;
                 
                 // Enable Quartermaster button on success
-                quartermasterBtn.disabled = false;
-                quartermasterBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById(`quartermaster-btn-container-${index}`).classList.remove('hidden');
 
             } catch(e) { 
                 console.error("Refinement Error:", e); 
@@ -1033,3 +1040,5 @@
     </script>
 </body>
 </html>
+
+
