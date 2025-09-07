@@ -624,7 +624,7 @@
             const apiKey = apiKeyInput.value;
             if (!apiKey) { setGeminiStatus('<span class="text-red-500">Ye need a secret key to use the spyglass!</span>', false); return; }
             const selectedLeagueName = leagueSelect.options[leagueSelect.selectedIndex].text;
-            setGeminiStatus('Lookout scanning the horizon for fixtures...', true);
+            setGeminiStatus('Scanning the horizon for fixtures...', true);
             const prompt = `Using Google Search, find all upcoming league football fixtures for the '${selectedLeagueName}' scheduled within the next 7 days from today, ${new Date().toDateString()}. You MUST provide the response as a single, valid JSON array of objects. Do not include any explanatory text before or after the JSON array. Each object in the array must have these three keys: "HomeTeam", "AwayTeam", and "MatchDate" (formatted as "YYYY-MM-DD"). If your search finds no fixtures, you MUST return an empty JSON array: [].`;
             try {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
