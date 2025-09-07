@@ -854,7 +854,7 @@
                 "away": "Identify a key player for the away team and why, in pirate character."
               },
               "tacticalPreview": "A short, one-sentence tactical preview of the match, as a pirate pundit would say it.",
-              "finalJustification": "A single sentence explaining the final outcome. It MUST start by stating if the live news and odds SUPPORT or CONTRADICT the Kraken's initial prediction, then briefly state why."
+              "finalJustification": "A single sentence explaining the final outcome. It MUST start by stating if the live news and odds SUPPORT or CONTRADICT the Kraken's prediction, then briefly state why."
             }
             `;
 
@@ -911,7 +911,7 @@
                         <div class="bg-gray-100 p-3 rounded-md">
                             <h4 class="font-semibold text-gray-800 mb-2">Captain's Match Insights</h4>
                             <div class="mb-3">
-                                <p class="font-bold text-gray-700">Tactical Preamble</p>
+                                <p class="font-bold text-gray-700">Initial Outlook</p>
                                 <p class="text-gray-600 italic">"${analysis.tacticalPreview || 'Not available.'}"</p>
                             </div>
                             <div class="text-center mb-3">
@@ -932,8 +932,8 @@
                         <div> <h4 class="font-semibold text-gray-800">Tavern Rumors (News Summary):</h4> <p class="text-gray-600 italic">${analysis.newsSummary}</p> </div>
                         <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right text-gray-900"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
                         <div class="space-y-2 bg-gray-100 p-2 rounded-md">
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Call (Stats):</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Call:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
                             <h4 class="font-bold">Treasure Hunt Analysis</h4>
@@ -1029,9 +1029,9 @@
 
                 quartermasterSection.innerHTML = `
                     <div class="space-y-3 text-sm bg-yellow-50 p-3 rounded-md border border-yellow-200 shadow">
-                        <h4 class="font-bold text-gray-800 text-base font-pirata tracking-wide">Quartermaster's Final Ledger</h4>
+                        <h4 class="font-bold text-gray-800 text-base font-pirata tracking-wide">Quartermaster's Ledger</h4>
                         <div>
-                            <p class="font-semibold text-gray-700">Synthesis:</p>
+                            <p class="font-semibold text-gray-700">Final thoughts:</p>
                             <p class="text-gray-600 italic">"${review.synthesis}"</p>_
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
