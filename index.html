@@ -40,7 +40,7 @@
         /* Pirate theme background */
         body {
             background-color: #0a2d4d; /* Dark blue sea color */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w.org/2000/svg" width="200" height="200"><filter id="f" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="1" result="noise"/><feDiffuseLighting in="noise" lighting-color="%230d3a61" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23f)"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="f" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="1" result="noise"/><feDiffuseLighting in="noise" lighting-color="%230d3a61" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23f)"/></svg>');
             background-attachment: fixed; /* Keep the texture fixed during scroll */
         }
         /* Parchment style */
@@ -49,7 +49,7 @@
             border: 1px solid #d2b48c; /* A tan border */
             box-shadow: inset 0 0 8px rgba(139, 69, 19, 0.2);
              /* Subtle fibrous texture using SVG */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w.org/2000/svg" width="100" height="100"><filter id="f1" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="5" seed="10"/></filter><rect width="100%" height="100%" filter="url(%23f1)" opacity="0.05"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="f1" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="5" seed="10"/></filter><rect width="100%" height="100%" filter="url(%23f1)" opacity="0.05"/></svg>');
         }
     </style>
 </head>
@@ -149,7 +149,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'football-predictor-v37-pirate-flow'; /* Cache version updated */
+                    const CACHE_NAME = 'football-predictor-v38-pirate-toggle'; /* Cache version updated */
                     const urlsToCache = ['/'];
                     self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))); });
                     self.addEventListener('activate', event => { const cacheWhitelist = [CACHE_NAME]; event.waitUntil( caches.keys().then(cacheNames => Promise.all( cacheNames.map(cacheName => { if (cacheWhitelist.indexOf(cacheName) === -1) { return caches.delete(cacheName); } }) )).then(() => self.clients.claim()) ); });
@@ -654,28 +654,52 @@
                 const formattedDate = dateObj.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                 const homeTeamJs = homeTeam.replace(/'/g, "\\'"); const awayTeamJs = awayTeam.replace(/'/g, "\\'");
                 html += `
-                    <div class="p-4 bg-gray-50 rounded-lg space-y-3">
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="text-center sm:text-left"> <p class="font-bold text-lg text-gray-900">${homeTeam} vs ${awayTeam}</p> <p class="text-sm text-gray-500">${formattedDate}</p> </div>
-                            <div class="flex items-center gap-2 flex-wrap justify-center">
-                                <div id="prediction-${index}" class="text-sm font-semibold text-center w-full text-gray-800" data-prediction-values=""></div>
-                                <button id="predict-btn-${index}" onclick="runPrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="predict-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm" ${!modelsTrained ? 'disabled' : ''}>Forecast</button>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <!-- Main header for the fixture, always visible -->
+                        <div class="flex items-center justify-between gap-4 cursor-pointer" onclick="toggleFixtureDetails(${index})">
+                            <div class="text-center sm:text-left flex-grow">
+                                <p class="font-bold text-lg text-gray-900">${homeTeam} vs ${awayTeam}</p>
+                                <p class="text-sm text-gray-500">${formattedDate}</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button id="predict-btn-${index}" onclick="event.stopPropagation(); runPrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="predict-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap" ${!modelsTrained ? 'disabled' : ''}>Forecast</button>
+                                <svg id="toggle-icon-${index}" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
                             </div>
                         </div>
-                        <div id="reasoning-${index}" class="w-full pt-3 border-t border-gray-200 hidden"></div>
-                        <div id="refine-btn-container-${index}" class="mt-4 text-center hidden">
-                            <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Pirate Intel</button>
+
+                        <!-- Collapsible content area -->
+                        <div id="toggle-content-${index}" class="hidden space-y-4 pt-4 mt-4 border-t border-gray-200">
+                            <div id="prediction-${index}" class="text-sm font-semibold text-center w-full text-gray-800" data-prediction-values=""></div>
+                            <div id="reasoning-${index}" class="w-full hidden"></div>
+                            <div id="refine-btn-container-${index}" class="mt-2 text-center hidden">
+                                <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Pirate Intel</button>
+                            </div>
+                            <div id="refined-section-${index}" class="hidden w-full" data-captain-intel=""></div>
+                            <div id="quartermaster-btn-container-${index}" class="mt-2 text-center hidden">
+                                <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Quartermaster's Ledger</button>
+                            </div>
+                            <div id="quartermaster-section-${index}" class="hidden w-full"></div>
                         </div>
-                        <div id="refined-section-${index}" class="hidden w-full pt-3 border-t border-gray-200" data-captain-intel=""></div>
-                        <div id="quartermaster-btn-container-${index}" class="mt-4 text-center hidden">
-                             <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Quartermaster's Ledger</button>
-                        </div>
-                        <div id="quartermaster-section-${index}" class="hidden w-full pt-3 border-t border-gray-200"></div>
                     </div>
                 `;
             });
             html += '</div>';
             fixturesContainer.innerHTML = html;
+        }
+
+        function toggleFixtureDetails(index) {
+            const content = document.getElementById(`toggle-content-${index}`);
+            const icon = document.getElementById(`toggle-icon-${index}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
         }
 
         // --- Machine Learning ---
@@ -695,6 +719,15 @@
 
 
         async function runPrediction(homeTeam, awayTeam, index) {
+            const content = document.getElementById(`toggle-content-${index}`);
+            const icon = document.getElementById(`toggle-icon-${index}`);
+
+            // Ensure the content area is visible when starting a prediction
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            }
+
             const predictionEl = document.getElementById(`prediction-${index}`);
             predictionEl.innerHTML = '<div class="flex items-center justify-center"><div class="spinner"></div></div>';
             
@@ -745,7 +778,7 @@
                 </div>
             `;
             
-            // Show the container for the "Pirate Intel" button
+            document.getElementById(`reasoning-${index}`).classList.remove('hidden');
             document.getElementById(`refine-btn-container-${index}`).classList.remove('hidden');
         }
 
@@ -775,7 +808,6 @@
             `;
             const reasoningEl = document.getElementById(`reasoning-${index}`);
             reasoningEl.innerHTML = html;
-            reasoningEl.classList.remove('hidden');
         }
         
         async function refinePrediction(homeTeam, awayTeam, index) {
@@ -1040,5 +1072,3 @@
     </script>
 </body>
 </html>
-
-
