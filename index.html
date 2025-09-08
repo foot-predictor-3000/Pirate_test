@@ -92,7 +92,7 @@
                 <div id="training-section" class="hidden mt-4">
                     <button id="train-models-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Awaken the Kraken Brain
+                        Awaken the Kraken
                     </button>
                     <div id="training-status-area" class="mt-2 text-sm text-gray-600 text-center"></div>
                 </div>
@@ -514,7 +514,7 @@
                 if (type === 'model_trained') {
                     isTraining = false;
                     modelsTrained = true;
-                    trainingStatusArea.innerHTML = '<span class="text-green-600 font-semibold">The Kraken is ready to reveal its thoughts!</span>';
+                    trainingStatusArea.innerHTML = '<span class="text-green-600 font-semibold">The Kraken is ready!</span>';
                     trainModelsBtn.disabled = true;
                     trainModelsBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
                     trainModelsBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
