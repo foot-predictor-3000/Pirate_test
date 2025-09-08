@@ -678,7 +678,7 @@
                             </div>
                             <div id="refined-section-${index}" class="hidden w-full" data-captain-intel=""></div>
                             <div id="quartermaster-btn-container-${index}" class="mt-2 text-center hidden">
-                                <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">Get Quartermaster's Ledger</button>
+                                <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">See Quartermaster's Ledger</button>
                             </div>
                             <div id="quartermaster-section-${index}" class="hidden w-full"></div>
                         </div>
@@ -929,7 +929,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div> <h4 class="font-semibold text-gray-800">Tavern Rumors (News Summary):</h4> <p class="text-gray-600 italic">${analysis.newsSummary}</p> </div>
+                        <div> <h4 class="font-semibold text-gray-800">Tavern Rumors:</h4> <p class="text-gray-600 italic">${analysis.newsSummary}</p> </div>
                         <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right text-gray-900"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
                         <div class="space-y-2 bg-gray-100 p-2 rounded-md">
                             <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
