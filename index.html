@@ -144,6 +144,7 @@
         let trainingWorker;
         let isTraining = false;
         let modelsTrained = false;
+        let minEloRating, maxEloRating; // <-- Store min/max Elo for grading
 
         // --- PWA Service Worker ---
         if ('serviceWorker' in navigator) {
@@ -250,7 +251,13 @@
                         ratings.set(match.HomeTeam, R1_new);
                         ratings.set(match.AwayTeam, R2 + K * ((1 - S1) - (1-E1)));
                     });
-                    return ratings;
+
+                    // Find min and max Elo ratings after all calculations are done
+                    const ratingValues = Array.from(ratings.values());
+                    const minElo = Math.min(...ratingValues);
+                    const maxElo = Math.max(...ratingValues);
+                    
+                    return { ratings, minElo, maxElo };
                 }
                 
                 class StatusCallback extends tf.Callback {
@@ -272,7 +279,8 @@
                             self.postMessage({ type: 'status_update', payload: 'Calculating crew strength (Elo & Stats)...' });
                             const allMatchesWithDates = matches.map(m => ({ ...m, dateObj: parseDate(m.Date), id: m.HomeTeam + m.AwayTeam + m.Date })).filter(m => m.dateObj);
                             
-                            eloRatings = calculateEloRatings(allMatchesWithDates);
+                            const { ratings, minElo, maxElo } = calculateEloRatings(allMatchesWithDates);
+                            eloRatings = ratings;
                             const { strengths, avgHomeGoals, avgAwayGoals } = calculateTeamStrengths(allMatchesWithDates);
                             teamStrengths = { strengths, avgHomeGoals, avgAwayGoals };
 
@@ -309,11 +317,11 @@
                             await lrModel.fit(features, labels, { 
                                 ...baseTrainingArgs, 
                                 callbacks: [
-                                    new StatusCallback('Kraken considering what it all means...')
+                                    new StatusCallback('Kraken mulling it over...')
                                 ]
                             });
                             
-                            self.postMessage({ type: 'model_trained' });
+                            self.postMessage({ type: 'model_trained', payload: { minElo, maxElo } });
                             tf.dispose([features, labels]);
                         } catch(error) { self.postMessage({ type: 'training_error', payload: error.message + " " + error.stack }); }
                     } else if (type === 'predict') {
@@ -514,6 +522,11 @@
                 if (type === 'model_trained') {
                     isTraining = false;
                     modelsTrained = true;
+                    // Store the min and max Elo ratings from the worker
+                    if (payload) {
+                        minEloRating = payload.minElo;
+                        maxEloRating = payload.maxElo;
+                    }
                     trainingStatusArea.innerHTML = '<span class="text-green-600 font-semibold">The Kraken is ready!</span>';
                     trainModelsBtn.disabled = true;
                     trainModelsBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
@@ -617,6 +630,25 @@
         function setGeminiStatus(message, isLoading) {
             geminiStatusArea.innerHTML = isLoading ? `<div class="flex items-center"><div class="spinner mr-2"></div><p>${message}</p></div>` : `<p>${message}</p>`;
             findFixturesBtn.disabled = isLoading;
+        }
+
+        // NEW: Helper function to convert Elo to a letter grade
+        function eloToGrade(elo, minElo, maxElo) {
+            if (typeof elo !== 'number' || typeof minElo !== 'number' || typeof maxElo !== 'number' || minElo === maxElo) {
+                return ''; // Return nothing if data isn't ready
+            }
+            const normalized = (elo - minElo) / (maxElo - minElo);
+
+            if (normalized > 0.95) return 'A+';
+            if (normalized > 0.85) return 'A';
+            if (normalized > 0.75) return 'A-';
+            if (normalized > 0.65) return 'B+';
+            if (normalized > 0.55) return 'B';
+            if (normalized > 0.45) return 'B-';
+            if (normalized > 0.35) return 'C+';
+            if (normalized > 0.25) return 'C';
+            if (normalized > 0.15) return 'C-';
+            return 'D';
         }
         
         // --- Gemini API Integration ---
@@ -766,10 +798,10 @@
             predictionEl.dataset.predictionValues = JSON.stringify([ensH, ensD, ensA]);
             predictionEl.innerHTML = `
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-center text-xs mb-2">
-                    <div><span class="font-bold">The Kraken's hearts predict:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's 9 brains predict:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's Guts predict:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
-                    <div class="font-bold">Kraken's overall feeling: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's heart predicts:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's brain predicts:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's Gut predicts:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
+                    <div class="font-bold">Kraken's overall prediction: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2.5 flex overflow-hidden border border-gray-300" title="Kraken's Call: H ${Math.round(ensH*100)}% | D ${Math.round(ensD*100)}% | A ${Math.round(ensA*100)}%">
                     <div class="bg-blue-500 h-full" style="width: ${ensH * 100}%"></div>
@@ -787,12 +819,18 @@
             const { homeTeamWins, draws, awayTeamWins, totalMatches } = h2hStats;
             const homeShort = homeTeam.substring(0, 10) + (homeTeam.length > 10 ? '...' : '');
             const awayShort = awayTeam.substring(0, 10) + (awayTeam.length > 10 ? '...' : '');
+            
+            const homeGrade = eloToGrade(homeElo, minEloRating, maxEloRating);
+            const awayGrade = eloToGrade(awayElo, minEloRating, maxEloRating);
+
             const html = `
                 <div class="space-y-2 text-xs text-gray-700">
                     <h4 class="font-semibold text-gray-800 text-sm">Statistical Snapshot</h4>
                     <div class="grid grid-cols-3 gap-2 text-center"> <div class="font-bold">Metric</div> <div class="font-bold">${homeShort}</div> <div class="font-bold">${awayShort}</div> </div>
                     <div class="grid grid-cols-3 gap-2 text-center bg-gray-100 p-1 rounded-md">
-                        <div>Crew Shipshape Rating (Elo)</div> <div>${Math.round(homeElo)}</div> <div>${Math.round(awayElo)}</div>
+                        <div>Crew Shipshape Rating (Elo)</div> 
+                        <div>${Math.round(homeElo)} <span class="font-bold text-blue-600">${homeGrade}</span></div> 
+                        <div>${Math.round(awayElo)} <span class="font-bold text-red-600">${awayGrade}</span></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-center bg-gray-100 p-1 rounded-md"> <div class="text-left font-semibold col-span-3">Overall Form (Last 5 Voyages)</div>
                         <div>Form (Pts/15)</div> <div>${Math.round(homeOverallStats.formPoints * 15)}</div> <div>${Math.round(awayOverallStats.formPoints * 15)}</div>
@@ -947,7 +985,7 @@
                             <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
-                            <h4 class="font-bold">Treasure Hunt</h4>
+                            <h4 class="font-bold">Treasure Hunt Analysis</h4>
                             ${valueHtml}
                         </div>
                         <div class="bg-indigo-100 border-l-4 border-indigo-500 text-indigo-700 p-3 rounded-md">
