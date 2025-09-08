@@ -21,7 +21,7 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <link rel="manifest" href="data:application/json;base64,ew0KICAic2hvcnRfbmFtZSI6ICJGb290YmFsbFByZWRpY3RvciIsDQogICJuYW1lIjogIk9mZmxpbmUgRm9vdGJhbGwgUHJlZGljdG9yIiwNCiAgImljb25zIjogWw0KICAgIHsNCiAgICAgICJzcmMiOiAiaWNvbnMvaWNvbi0xOTIucG5nIiwNCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsDQogICAgICAic2l6ZXMiOiAiMTkyxDE5MiINCiAgICB9LA0KICAgIHsNCiAgICAgICJzcmMiOiAiaWNvbnMvaWNvbi01MTIucG5nIiwNCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsDQogICAgICAic2l6ZXMiOiAiNTEyeDUxMiINCiAgICB9DQogIF0sDQogICJzdGFydF91cmwiOiAiLiIsDQogICJkaXNwbGF5IjogInNtandhbG9bmUiLA0KICAidGhlbWVfY29loiOiAiIzAwMDAwMCIsDQogICJiYWNrZ3JvdW5k_Y29sb3IiOiAiI2ZmZmZmZiINCn0=">
+    <link rel="manifest" href="data:application/json;base64,ew0KICAic2hvcnRfbmFtZSI6ICJGb290YmFsbFByZWRpY3RvciIsDQogICJuYW1lIjogIk9mZmxpbmUgRm9vdGJhbGwgUHJlZGljdG9yIiwNCiAgImljb25zIjogWw0KICAgIHsNCiAgICAgICJzcmMiOiAiaWNvbnMvaWNvbi0xOTIucG5nIiwNCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsDQogICAgICAic2l6ZXMiOiAiMTkyxDE5MiINCiAgICB9LA0KICAgIHsNCiAgICAgICJzcmMiOiAiaWNvbnMvaWNvbi01MTIucG5nIiwNCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsDQogICAgICAic2l6ZXMiOiAiNTEyeDUxMiINCiAgICB9DQogIF0sDQogICJzdGFydF91cmwiOiAiLiIsDQogICJkaXNwbGF5IjogInNtYW5kYWxvbmUiLA0KICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIsDQogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmZmZmYiDQp9">
 
     <style>
         /* Simple loading spinner */
@@ -838,23 +838,33 @@
 
             **Task:** Analyze the upcoming football match: ${homeTeam} vs ${awayTeam}.
             The Kraken's statistical model provides a baseline prediction of: ${statsString}.
-            Perform a Google Search. Your information MUST be up-to-date. Specifically search for the latest team news, significant player injuries, and current betting odds for this match.
+            
+            **CRITICAL: Perform a Google Search for a holistic view.** Your search and summary must go beyond just injuries. Synthesize the latest information on:
+            1.  **Team News & Injuries:** Who is out and how important are they?
+            2.  **Current Form & Morale:** What is the narrative? Are they playing with confidence? Is the manager under pressure?
+            3.  **Head-to-Head History:** Is there a psychological edge based on recent encounters?
+            4.  **Betting Odds:** What do the bookmakers think?
             
             **CRITICAL:** When identifying key players, you MUST verify they are currently on the team's active roster for the present-day season. Do not list players who have recently transferred away from the club.
 
-            **Output Format:** Respond with a single, valid JSON object with NO MARKDOWN or other text outside the JSON structure. The object must contain these exact keys:
+            **Output Format & Logic:** Respond with a single, valid JSON object with NO MARKDOWN or other text outside the JSON structure.
+            **Crucially, your "finalJustification" MUST be logically consistent with your "sentimentAdjustment" value.**
+            - If sentimentAdjustment is **positive**, your justification must explain why the news favors the **home team**.
+            - If sentimentAdjustment is **negative**, your justification must explain why the news favors the **away team**.
+            - If sentimentAdjustment is **zero**, your justification must explain why the news is balanced.
+
+            The object must contain these exact keys:
             {
-              "newsSummary": "A concise summary of key news and injuries for both crews, written in character.",
+              "newsSummary": "A concise summary of key news, form, and context for both crews, written in character.",
               "odds": { "homeWin": "string decimal odds or 'N/A'", "draw": "string decimal odds or 'N/A'", "awayWin": "string decimal odds or 'N/A'" },
-              "homeSentiment": -1.0, // Float from -1.0 (very bad news) to 1.0 (very good news) for the home team.
-              "awaySentiment": 1.0, // Float from -1.0 to 1.0 for the away team.
+              "sentimentAdjustment": 0.0, // Float from -1.0 (news strongly favors away team) to +1.0 (news strongly favors home team).
               "predictedScoreline": "Your best guess for the final score, e.g., '2-1'.",
               "keyPlayers": {
                 "home": "Identify a key player for the home team whose strengths are suited to the tie and why, in pirate character.",
                 "away": "Identify a key player for the away team whose strengths are suited to the tie and why, in pirate character."
               },
               "tacticalPreview": "A short, one-sentence tactical preview of the match, as a pirate pundit would say it.",
-              "finalJustification": "A single sentence explaining the final outcome. It MUST start by stating if the live news and odds SUPPORT or CONTRADICT the Kraken's prediction, then briefly state why."
+              "finalJustification": "A single sentence explaining the final outcome based on your synthesized news. It MUST start by stating if the live news and odds SUPPORT or CONTRADICT the Kraken's prediction, and the reasoning must align with your sentimentAdjustment value."
             }
             `;
 
@@ -871,8 +881,9 @@
                 // --- Store data for quartermaster ---
                 refinedSection.dataset.captainIntel = JSON.stringify(analysis);
                 
-                const net_sentiment = analysis.homeSentiment - analysis.awaySentiment;
-                const adjustment = net_sentiment * dynamicAdjustmentFactor; 
+                // Use the single sentiment adjustment factor directly. Default to 0 if missing or invalid.
+                const sentimentAdjustment = parseFloat(analysis.sentimentAdjustment) || 0.0;
+                const adjustment = sentimentAdjustment * dynamicAdjustmentFactor; 
                 
                 let new_p_h = p_h + adjustment; let new_p_a = p_a - adjustment; let new_p_d = p_d - Math.abs(adjustment) * 0.5;
                 const clipped_p_h = Math.max(0.01, Math.min(0.99, new_p_h)); const clipped_p_a = Math.max(0.01, Math.min(0.99, new_p_a)); const clipped_p_d = Math.max(0.01, Math.min(0.99, new_p_d));
@@ -933,7 +944,7 @@
                         <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right text-gray-900"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
                         <div class="space-y-2 bg-gray-100 p-2 rounded-md">
                             <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Tempered Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
                             <h4 class="font-bold">Treasure Hunt Analysis</h4>
@@ -994,7 +1005,7 @@
             - ${JSON.stringify(captainIntel, null, 2)}
 
             **Your Analysis Must Include:**
-            1.  **Synthesis:** Directly compare the statistical data with the Captain's qualitative report. Do the injuries and news justify a deviation from the statistical baseline? Do the betting odds align with the Kraken or the Captain's refined view?
+            1.  **Synthesis:** Directly compare the statistical data with the Captain's qualitative report. To form your final verdict, you must weigh both the final probabilities presented by the Captain and his qualitative reasoning. Do the injuries, form, and odds justify the Captain's final stance?
             2.  **Final Verdict:** State the most likely outcome (e.g., "Home Win," "Draw," "Away Win").
             3.  **Confidence Level:** Assign a confidence level to your verdict. You MUST use one of these five options: "Very High," "High," "Medium," "Low," or "Very Low."
             4.  **Risk Assessment:** Briefly state the primary risk or potential for an upset (e.g., "The key risk is the away team's star striker returning from injury.").
@@ -1032,7 +1043,7 @@
                         <h4 class="font-bold text-gray-800 text-base font-pirata tracking-wide">Quartermaster's Ledger</h4>
                         <div>
                             <p class="font-semibold text-gray-700">Final thoughts:</p>
-                            <p class="text-gray-600 italic">"${review.synthesis}"</p>_
+                            <p class="text-gray-600 italic">"${review.synthesis}"</p>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                             <div class="bg-white p-2 rounded shadow-sm border border-gray-200">
@@ -1074,5 +1085,4 @@
     </script>
 </body>
 </html>
-
 
