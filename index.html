@@ -403,29 +403,53 @@
                     const smoothedAwayWinRate = (awayTeamWins + alpha) / smoothedTotal;
                     return { homeTeamWins, draws, awayTeamWins, totalMatches, featureHomeWin: smoothedHomeWinRate, featureDraw: smoothedDrawRate, featureAwayWin: smoothedAwayWinRate };
                 }
+                
                 function calculateTeamStats(teamName, pastMatches, venue = 'Overall') {
                     let relevantMatches = pastMatches;
                     if (venue === 'Home') { relevantMatches = pastMatches.filter(m => m.HomeTeam === teamName); } 
                     else if (venue === 'Away') { relevantMatches = pastMatches.filter(m => m.AwayTeam === teamName); }
+                    
                     const lastNMatches = relevantMatches.slice(-FORM_MATCHES_COUNT);
                     if (lastNMatches.length === 0) return { gamesPlayed: 0, formPoints: 0, avgGoalsScored: 0, avgGoalsConceded: 0, avgSTF: 0, avgSTA: 0 };
                     
-                    let formPoints = 0, goalsScored = 0, goalsConceded = 0, shotsOnTargetFor = 0, shotsOnTargetAgainst = 0;
-                    for (const match of lastNMatches) {
+                    const weights = Array.from({length: lastNMatches.length}, (_, i) => 0.6 + (0.4 * (i / (lastNMatches.length -1 || 1))));
+                    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+                    let weightedStats = { formPoints: 0, goalsScored: 0, goalsConceded: 0, shotsOnTargetFor: 0, shotsOnTargetAgainst: 0 };
+
+                    lastNMatches.forEach((match, i) => {
+                        const weight = weights[i];
                         const FTHG = parseInt(match.FTHG, 10); const FTAG = parseInt(match.FTAG, 10);
                         const HST = parseInt(match.HST, 10); const AST = parseInt(match.AST, 10);
-                        if (isNaN(FTHG) || isNaN(FTAG) || isNaN(HST) || isNaN(AST)) continue;
-                        if (match.HomeTeam === teamName) { 
-                            goalsScored += FTHG; goalsConceded += FTAG; shotsOnTargetFor += HST; shotsOnTargetAgainst += AST;
-                            if (match.FTR === 'H') formPoints += 3; if (match.FTR === 'D') formPoints += 1;
-                        } else { 
-                            goalsScored += FTAG; goalsConceded += FTHG; shotsOnTargetFor += AST; shotsOnTargetAgainst += HST;
-                            if (match.FTR === 'A') formPoints += 3; if (match.FTR === 'D') formPoints += 1;
+                        if (isNaN(FTHG) || isNaN(FTAG) || isNaN(HST) || isNaN(AST)) return;
+
+                        if (match.HomeTeam === teamName) {
+                            weightedStats.goalsScored += FTHG * weight;
+                            weightedStats.goalsConceded += FTAG * weight;
+                            weightedStats.shotsOnTargetFor += HST * weight;
+                            weightedStats.shotsOnTargetAgainst += AST * weight;
+                            if (match.FTR === 'H') weightedStats.formPoints += 3 * weight;
+                            if (match.FTR === 'D') weightedStats.formPoints += 1 * weight;
+                        } else {
+                            weightedStats.goalsScored += FTAG * weight;
+                            weightedStats.goalsConceded += FTHG * weight;
+                            weightedStats.shotsOnTargetFor += AST * weight;
+                            weightedStats.shotsOnTargetAgainst += HST * weight;
+                            if (match.FTR === 'A') weightedStats.formPoints += 3 * weight;
+                            if (match.FTR === 'D') weightedStats.formPoints += 1 * weight;
                         }
-                    }
-                    const numMatches = lastNMatches.length;
-                    return { gamesPlayed: relevantMatches.length, formPoints: numMatches > 0 ? formPoints / (numMatches * 3) : 0, avgGoalsScored: numMatches > 0 ? goalsScored / numMatches : 0, avgGoalsConceded: numMatches > 0 ? goalsConceded / numMatches : 0, avgSTF: numMatches > 0 ? shotsOnTargetFor / numMatches : 0, avgSTA: numMatches > 0 ? shotsOnTargetAgainst / numMatches : 0 };
+                    });
+
+                    return {
+                        gamesPlayed: relevantMatches.length,
+                        formPoints: totalWeight > 0 ? (weightedStats.formPoints / (totalWeight * 3)) : 0,
+                        avgGoalsScored: totalWeight > 0 ? weightedStats.goalsScored / totalWeight : 0,
+                        avgGoalsConceded: totalWeight > 0 ? weightedStats.goalsConceded / totalWeight : 0,
+                        avgSTF: totalWeight > 0 ? weightedStats.shotsOnTargetFor / totalWeight : 0,
+                        avgSTA: totalWeight > 0 ? weightedStats.shotsOnTargetAgainst / totalWeight : 0
+                    };
                 }
+
                 function getFeatureVector(match, teamMap, homeStats, awayStats, h2hStats, homeElo, awayElo) {
                     const numTeams = teamMap.size;
                     const homeTeamVec = Array(numTeams).fill(0); if (teamMap.has(match.HomeTeam)) homeTeamVec[teamMap.get(match.HomeTeam)] = 1;
@@ -798,10 +822,10 @@
             predictionEl.dataset.predictionValues = JSON.stringify([ensH, ensD, ensA]);
             predictionEl.innerHTML = `
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-center text-xs mb-2">
-                    <div><span class="font-bold">The Kraken's heart predicts:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's brain predicts:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's Gut predicts:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
-                    <div class="font-bold">Kraken's overall prediction: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's hearts predict:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's brains predict:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's guts predict:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
+                    <div class="font-bold">Kraken's overall feeling: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2.5 flex overflow-hidden border border-gray-300" title="Kraken's Call: H ${Math.round(ensH*100)}% | D ${Math.round(ensD*100)}% | A ${Math.round(ensA*100)}%">
                     <div class="bg-blue-500 h-full" style="width: ${ensH * 100}%"></div>
