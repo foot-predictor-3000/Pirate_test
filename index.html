@@ -766,10 +766,10 @@
             predictionEl.dataset.predictionValues = JSON.stringify([ensH, ensD, ensA]);
             predictionEl.innerHTML = `
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-center text-xs mb-2">
-                    <div><span class="font-bold">The Kraken's heart predicts:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's brain predicts:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
-                    <div><span class="font-bold">The Kraken's Gut predicts:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
-                    <div class="font-bold">Kraken's overall prediction: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's hearts predict:</span> ${Math.round(nnH*100)}|${Math.round(nnD*100)}|${Math.round(nnA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's 9 brains predict:</span> ${Math.round(lrH*100)}|${Math.round(lrD*100)}|${Math.round(lrA*100)}%</div>
+                    <div><span class="font-bold">The Kraken's Guts predict:</span> ${Math.round(poiH*100)}|${Math.round(poiD*100)}|${Math.round(poiA*100)}%</div>
+                    <div class="font-bold">Kraken's overall feeling: ${Math.round(ensH*100)}|${Math.round(ensD*100)}|${Math.round(ensA*100)}%</div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2.5 flex overflow-hidden border border-gray-300" title="Kraken's Call: H ${Math.round(ensH*100)}% | D ${Math.round(ensD*100)}% | A ${Math.round(ensA*100)}%">
                     <div class="bg-blue-500 h-full" style="width: ${ensH * 100}%"></div>
@@ -933,7 +933,7 @@
                         <div class="flex justify-between items-center bg-gray-100 p-2 rounded-md"> <span class="font-semibold text-gray-800">Bookie Odds:</span> <span class="text-right text-gray-900"> H: <b class="text-blue-600">${analysis.odds.homeWin}</b>, D: <b class="text-gray-600">${analysis.odds.draw}</b>, A: <b class="text-red-600">${analysis.odds.awayWin}</b> </span> </div>
                         <div class="space-y-2 bg-gray-100 p-2 rounded-md">
                             <div class="flex justify-between items-center"> <span class="font-semibold text-gray-800">Kraken's Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(p_a*100)}%</b> </span> </div>
-                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
+                            <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Tempered Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
                             <h4 class="font-bold">Treasure Hunt Analysis</h4>
