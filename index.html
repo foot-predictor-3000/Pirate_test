@@ -111,7 +111,7 @@
                 </button>
                 <div id="gemini-status-area" class="mt-4 text-sm text-gray-600 min-h-[20px]"></div>
                 <div id="fixtures-container" class="mt-4">
-                    </div>
+                </div>
             </div>
         </main>
 
@@ -150,7 +150,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'football-predictor-v39-pirate-confidence'; /* Cache version updated */
+                    const CACHE_NAME = 'football-predictor-v40-pirate-confidence'; /* Cache version updated */
                     const urlsToCache = ['/'];
                     self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))); });
                     self.addEventListener('activate', event => { const cacheWhitelist = [CACHE_NAME]; event.waitUntil( caches.keys().then(cacheNames => Promise.all( cacheNames.map(cacheName => { if (cacheWhitelist.indexOf(cacheName) === -1) { return caches.delete(cacheName); } }) )).then(() => self.clients.claim()) ); });
@@ -922,8 +922,8 @@
               "sentimentAdjustment": 0.0, // Float from -1.0 (news strongly favors away team) to +1.0 (news strongly favors home team).
               "predictedScoreline": "Your best guess for the final score, e.g., '2-1'.",
               "keyPlayers": {
-                "home": "Identify a key player for the home team whose strengths are suited to the tie and why, in pirate character.",
-                "away": "Identify a key player for the away team whose strengths are suited to the tie and why, in pirate character."
+                "home": "Identify a key player for the home team who is **fit to play** and whose strengths are suited to the tie. **Do not select a player who is known to be injured or suspended.** Explain why in pirate character.",
+                "away": "Identify a key player for the away team who is **fit to play** and whose strengths are suited to the tie. **Do not select a player who is known to be injured or suspended.** Explain why in pirate character."
               },
               "tacticalPreview": "A short, one-sentence tactical preview of the match, as a pirate pundit would say it.",
               "finalJustification": "A single sentence explaining the final outcome based on your synthesized news. It MUST start by stating if the live news and odds SUPPORT or CONTRADICT the Kraken's prediction, and the reasoning must align with your sentimentAdjustment value."
@@ -968,9 +968,14 @@
                         const bestValue = values.reduce((best, current) => current.value > best.value ? current : best, {value: -Infinity});
                         const valueThreshold = 0.05; // 5%
 
-                        if (bestValue.value > valueThreshold) {
+                        const finalProbs = { 'Home Win': final_p_h, 'Draw': final_p_d, 'Away Win': final_p_a };
+                        const mostLikelyOutcome = Object.keys(finalProbs).reduce((a, b) => finalProbs[a] > finalProbs[b] ? a : b);
+
+                        if (bestValue.value > valueThreshold && bestValue.outcome === mostLikelyOutcome) {
                             valueHtml = `<p>The Captain spies treasure in the <b>${bestValue.outcome}</b> bet!</p>
-                                        <p class="text-xs">The Kraken's probability (${(bestValue.prob * 100).toFixed(1)}%) be <b>${(bestValue.value * 100).toFixed(1)}%</b> higher than the bookies' offering (${(bestValue.implied * 100).toFixed(1)}%).</p>`;
+                                         <p class="text-xs">The Captain's probability (${(bestValue.prob * 100).toFixed(1)}%) be <b>${(bestValue.value * 100).toFixed(1)}%</b> higher than the bookies' offering (${(bestValue.implied * 100).toFixed(1)}%).</p>`;
+                        } else if (bestValue.value > valueThreshold && bestValue.outcome !== mostLikelyOutcome) {
+                             valueHtml = `<p>The bookies' odds on a <b>${bestValue.outcome}</b> look generous, but the Captain's compass still points towards a <b>${mostLikelyOutcome}</b>.</p>`;
                         } else {
                             valueHtml = "<p>No treasure here, matey. The bookies' odds be tight.</p>";
                         }
@@ -1147,4 +1152,3 @@
     </script>
 </body>
 </html>
-
