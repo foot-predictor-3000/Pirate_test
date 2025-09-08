@@ -110,8 +110,23 @@
                     Spot Upcoming Skirmishes
                 </button>
                 <div id="gemini-status-area" class="mt-4 text-sm text-gray-600 min-h-[20px]"></div>
-                <div id="fixtures-container" class="mt-4">
+
+                <!-- NEW UI STRUCTURE FOR FIXTURE SELECTION -->
+                <div id="fixtures-selection-area" class="hidden mt-4 space-y-6">
+                    <div>
+                        <h3 class="text-2xl font-pirata text-gray-800 border-b-2 border-dashed border-gray-400 pb-1 mb-3">Available Skirmishes</h3>
+                        <div id="available-fixtures-container" class="space-y-2">
+                            <!-- Available fixtures will be rendered here -->
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-pirata text-gray-800 border-b-2 border-dashed border-gray-400 pb-1 mb-3">Your Analysis Pack (<span id="pack-count">0</span>/3)</h3>
+                        <div id="analysis-pack-container" class="space-y-4">
+                            <!-- Selected fixtures for analysis will be rendered here -->
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </main>
 
@@ -125,32 +140,38 @@
         const leagueSelect = document.getElementById('league-select');
         const fetchDataBtn = document.getElementById('fetch-data-btn');
         const statusArea = document.getElementById('status-area');
-        const fixturesContainer = document.getElementById('fixtures-container');
         const apiKeyInput = document.getElementById('api-key-input');
         const findFixturesBtn = document.getElementById('find-fixtures-btn');
         const geminiStatusArea = document.getElementById('gemini-status-area');
         const trainingSection = document.getElementById('training-section');
         const trainModelsBtn = document.getElementById('train-models-btn');
         const trainingStatusArea = document.getElementById('training-status-area');
-        
+        const fixturesSelectionArea = document.getElementById('fixtures-selection-area');
+        const availableFixturesContainer = document.getElementById('available-fixtures-container');
+        const analysisPackContainer = document.getElementById('analysis-pack-container');
+        const packCountSpan = document.getElementById('pack-count');
+
         // --- Constants ---
         const DB_NAME = 'FootballDataDB';
         const DB_VERSION = 1;
         const MATCHES_STORE_NAME = 'matches';
         const H2H_MATCHES_COUNT = 5;
+        const ANALYSIS_PACK_LIMIT = 3;
 
         // --- Global State ---
         let db;
         let trainingWorker;
         let isTraining = false;
         let modelsTrained = false;
-        let minEloRating, maxEloRating; // <-- Store min/max Elo for grading
+        let minEloRating, maxEloRating;
+        let allFoundFixtures = [];
+        let analysisPack = [];
 
         // --- PWA Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'football-predictor-v40-pirate-confidence'; /* Cache version updated */
+                    const CACHE_NAME = 'football-predictor-v41-analysis-pack'; /* Cache version updated */
                     const urlsToCache = ['/'];
                     self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))); });
                     self.addEventListener('activate', event => { const cacheWhitelist = [CACHE_NAME]; event.waitUntil( caches.keys().then(cacheNames => Promise.all( cacheNames.map(cacheName => { if (cacheWhitelist.indexOf(cacheName) === -1) { return caches.delete(cacheName); } }) )).then(() => self.clients.claim()) ); });
@@ -252,7 +273,6 @@
                         ratings.set(match.AwayTeam, R2 + K * ((1 - S1) - (1-E1)));
                     });
 
-                    // Find min and max Elo ratings after all calculations are done
                     const ratingValues = Array.from(ratings.values());
                     const minElo = Math.min(...ratingValues);
                     const maxElo = Math.max(...ratingValues);
@@ -303,7 +323,6 @@
                             };
 
                             self.postMessage({ type: 'status_update', payload: 'Kraken learning...' });
-                            // NN Model gets Early Stopping
                             await nnModel.fit(features, labels, { 
                                 ...baseTrainingArgs, 
                                 callbacks: [
@@ -313,7 +332,6 @@
                             });
                             
                             self.postMessage({ type: 'status_update', payload: 'Kraken thinking deeply...' });
-                            // LR Model does NOT get Early Stopping
                             await lrModel.fit(features, labels, { 
                                 ...baseTrainingArgs, 
                                 callbacks: [
@@ -348,7 +366,6 @@
                                 const poissonProbsArray = getPoissonProbs(officialHomeTeam, officialAwayTeam, teamStrengths.strengths, teamStrengths.avgHomeGoals, teamStrengths.avgAwayGoals);
                                 const poissonProbsTensor = tf.tensor(poissonProbsArray).reshape([1,3]);
 
-                                // Weighted average: 40% NN, 25% LR, 35% Poisson
                                 const nnWeight = 0.40;
                                 const lrWeight = 0.25;
                                 const poissonWeight = 0.35;
@@ -454,12 +471,12 @@
                     const numTeams = teamMap.size;
                     const homeTeamVec = Array(numTeams).fill(0); if (teamMap.has(match.HomeTeam)) homeTeamVec[teamMap.get(match.HomeTeam)] = 1;
                     const awayTeamVec = Array(numTeams).fill(0); if (teamMap.has(match.AwayTeam)) awayTeamVec[teamMap.get(match.AwayTeam)] = 1;
-                    const h2hWeight = 0.5; // Dampen H2H influence
+                    const h2hWeight = 0.5;
                     return [ ...homeTeamVec, ...awayTeamVec, 
                         homeStats.formPoints, homeStats.avgGoalsScored, homeStats.avgGoalsConceded, homeStats.avgSTF, homeStats.avgSTA,
                         awayStats.formPoints, awayStats.avgGoalsScored, awayStats.avgGoalsConceded, awayStats.avgSTF, awayStats.avgSTA,
                         h2hStats.featureHomeWin * h2hWeight, h2hStats.featureDraw * h2hWeight, h2hStats.featureAwayWin * h2hWeight,
-                        homeElo / 2000, awayElo / 2000 // Normalize Elo
+                        homeElo / 2000, awayElo / 2000
                     ];
                 }
                 function prepareData(matches, eloRatings) {
@@ -546,7 +563,6 @@
                 if (type === 'model_trained') {
                     isTraining = false;
                     modelsTrained = true;
-                    // Store the min and max Elo ratings from the worker
                     if (payload) {
                         minEloRating = payload.minElo;
                         maxEloRating = payload.maxElo;
@@ -655,11 +671,10 @@
             geminiStatusArea.innerHTML = isLoading ? `<div class="flex items-center"><div class="spinner mr-2"></div><p>${message}</p></div>` : `<p>${message}</p>`;
             findFixturesBtn.disabled = isLoading;
         }
-
-        // NEW: Helper function to convert Elo to a letter grade
+        
         function eloToGrade(elo, minElo, maxElo) {
             if (typeof elo !== 'number' || typeof minElo !== 'number' || typeof maxElo !== 'number' || minElo === maxElo) {
-                return ''; // Return nothing if data isn't ready
+                return '';
             }
             const normalized = (elo - minElo) / (maxElo - minElo);
 
@@ -675,12 +690,13 @@
             return 'D';
         }
         
-        // --- Gemini API Integration ---
+        // --- Gemini API Integration & Fixture Management ---
         async function findFixturesWithGemini() {
             const apiKey = apiKeyInput.value;
             if (!apiKey) { setGeminiStatus('<span class="text-red-500">Ye need a secret key to use the spyglass!</span>', false); return; }
             const selectedLeagueName = leagueSelect.options[leagueSelect.selectedIndex].text;
             setGeminiStatus('Scanning the horizon for fixtures...', true);
+            fixturesSelectionArea.classList.add('hidden');
             const prompt = `Using Google Search, find all upcoming league football fixtures for the '${selectedLeagueName}' scheduled within the next 7 days from today, ${new Date().toDateString()}. You MUST provide the response as a single, valid JSON array of objects. Do not include any explanatory text before or after the JSON array. Each object in the array must have these three keys: "HomeTeam", "AwayTeam", and "MatchDate" (formatted as "YYYY-MM-DD"). If your search finds no fixtures, you MUST return an empty JSON array: [].`;
             try {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
@@ -691,58 +707,113 @@
                 const textResponse = result.candidates[0].content.parts[0].text;
                 const jsonString = textResponse.replace(/```json|```/g, '').trim();
                 const fixtures = JSON.parse(jsonString);
-                displayGeminiFixtures(fixtures);
-                setGeminiStatus(`Spotted ${fixtures.length} voyages on the horizon.`, false);
+                
+                allFoundFixtures = fixtures.map((f, i) => ({...f, id: i})); // Give each fixture a unique ID
+                analysisPack = []; // Reset the pack on new search
+                renderFixtureUI();
+                
+                setGeminiStatus(`Spotted ${fixtures.length} voyages on the horizon. Choose up to ${ANALYSIS_PACK_LIMIT} to analyze.`, false);
+                fixturesSelectionArea.classList.remove('hidden');
+
             } catch (error) {
                 console.error('Gemini API Error:', error);
                 setGeminiStatus(`<span class="text-red-500">Spyglass is cracked! Error finding fixtures. Check key and try again.</span>`, false);
-                fixturesContainer.innerHTML = '';
+                fixturesSelectionArea.classList.add('hidden');
+            }
+        }
+
+        function addFixtureToPack(fixtureId) {
+            if (analysisPack.length >= ANALYSIS_PACK_LIMIT) {
+                alert(`Yer pack is full, Captain! You can only analyze ${ANALYSIS_PACK_LIMIT} skirmishes at a time.`);
+                return;
+            }
+            const fixtureToAdd = allFoundFixtures.find(f => f.id === fixtureId);
+            if (fixtureToAdd) {
+                analysisPack.push(fixtureToAdd);
+                renderFixtureUI();
             }
         }
         
-        function displayGeminiFixtures(fixtures) {
-            if (!fixtures || fixtures.length === 0) { fixturesContainer.innerHTML = '<p class="text-gray-500">No ships on the horizon in the next 7 days, Captain. Try again later.</p>'; return; }
-            let html = '<div class="space-y-4">';
-            fixtures.sort((a, b) => new Date(a.MatchDate) - new Date(b.MatchDate));
-            fixtures.forEach((fixture, index) => {
-                const homeTeam = fixture.HomeTeam; const awayTeam = fixture.AwayTeam;
-                const dateObj = new Date(fixture.MatchDate); dateObj.setUTCHours(12);
-                const formattedDate = dateObj.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-                const homeTeamJs = homeTeam.replace(/'/g, "\\'"); const awayTeamJs = awayTeam.replace(/'/g, "\\'");
-                html += `
-                    <div class="p-4 bg-gray-50 rounded-lg">
-                        <!-- Main header for the fixture, always visible -->
-                        <div class="flex items-center justify-between gap-4 cursor-pointer" onclick="toggleFixtureDetails(${index})">
-                            <div class="text-center sm:text-left flex-grow">
-                                <p class="font-bold text-lg text-gray-900">${homeTeam} vs ${awayTeam}</p>
-                                <p class="text-sm text-gray-500">${formattedDate}</p>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <button id="predict-btn-${index}" onclick="event.stopPropagation(); runPrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="predict-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap" ${!modelsTrained ? 'disabled' : ''}>Forecast</button>
-                                <svg id="toggle-icon-${index}" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
+        function removeFixtureFromPack(fixtureId) {
+            analysisPack = analysisPack.filter(f => f.id !== fixtureId);
+            renderFixtureUI();
+        }
 
-                        <!-- Collapsible content area -->
-                        <div id="toggle-content-${index}" class="hidden space-y-4 pt-4 mt-4 border-t border-gray-200">
-                            <div id="prediction-${index}" class="text-sm font-semibold text-center w-full text-gray-800" data-prediction-values=""></div>
-                            <div id="reasoning-${index}" class="w-full hidden"></div>
-                            <div id="refine-btn-container-${index}" class="mt-2 text-center hidden">
-                                <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Hit up the Taverns and gather the latest pirate gossip!</button>
+        function renderFixtureUI() {
+            // Filter available fixtures: those in allFoundFixtures but NOT in analysisPack
+            const availableFixtures = allFoundFixtures.filter(f => !analysisPack.some(p => p.id === f.id));
+            
+            // Render Available Fixtures
+            if (availableFixtures.length === 0) {
+                 availableFixturesContainer.innerHTML = '<p class="text-gray-500 text-sm">All available skirmishes have been added to your pack.</p>';
+            } else {
+                availableFixturesContainer.innerHTML = availableFixtures.sort((a,b) => new Date(a.MatchDate) - new Date(b.MatchDate)).map(fixture => {
+                    const dateObj = new Date(fixture.MatchDate); dateObj.setUTCHours(12);
+                    const formattedDate = dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                    return `
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-md border">
+                            <div class="text-sm">
+                                <p class="font-bold text-gray-800">${fixture.HomeTeam} vs ${fixture.AwayTeam}</p>
+                                <p class="text-xs text-gray-500">${formattedDate}</p>
                             </div>
-                            <div id="refined-section-${index}" class="hidden w-full" data-captain-intel=""></div>
-                            <div id="quartermaster-btn-container-${index}" class="mt-2 text-center hidden">
-                                <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">See Quartermaster's Ledger</button>
-                            </div>
-                            <div id="quartermaster-section-${index}" class="hidden w-full"></div>
+                            <button onclick="addFixtureToPack(${fixture.id})" class="add-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md text-xs whitespace-nowrap" ${analysisPack.length >= ANALYSIS_PACK_LIMIT ? 'disabled' : ''}>+ Add</button>
                         </div>
-                    </div>
-                `;
+                    `;
+                }).join('');
+            }
+            
+            // Render Analysis Pack
+             packCountSpan.textContent = analysisPack.length;
+            if (analysisPack.length === 0) {
+                analysisPackContainer.innerHTML = '<p class="text-gray-500 text-sm">Your analysis pack is empty. Add a skirmish to begin.</p>';
+            } else {
+                 analysisPackContainer.innerHTML = analysisPack.sort((a,b) => new Date(a.MatchDate) - new Date(b.MatchDate)).map((fixture, index) => {
+                    const homeTeam = fixture.HomeTeam; const awayTeam = fixture.AwayTeam;
+                    const dateObj = new Date(fixture.MatchDate); dateObj.setUTCHours(12);
+                    const formattedDate = dateObj.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                    const homeTeamJs = homeTeam.replace(/'/g, "\\'"); const awayTeamJs = awayTeam.replace(/'/g, "\\'");
+                    return `
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="text-center sm:text-left flex-grow cursor-pointer" onclick="toggleFixtureDetails(${index})">
+                                    <p class="font-bold text-lg text-gray-900">${homeTeam} vs ${awayTeam}</p>
+                                    <p class="text-sm text-gray-500">${formattedDate}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="predict-btn-${index}" onclick="runPrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="predict-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap" ${!modelsTrained ? 'disabled' : ''}>Forecast</button>
+                                    <button onclick="removeFixtureFromPack(${fixture.id})" class="text-red-500 hover:text-red-700 p-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <svg id="toggle-icon-${index}" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 transition-transform duration-300 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" onclick="toggleFixtureDetails(${index})">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="toggle-content-${index}" class="hidden space-y-4 pt-4 mt-4 border-t border-gray-200">
+                                <div id="prediction-${index}" class="text-sm font-semibold text-center w-full text-gray-800" data-prediction-values=""></div>
+                                <div id="reasoning-${index}" class="w-full hidden"></div>
+                                <div id="refine-btn-container-${index}" class="mt-2 text-center hidden">
+                                    <button id="refine-btn-${index}" onclick="refinePrediction('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Hit up the Taverns and gather the latest pirate gossip!</button>
+                                </div>
+                                <div id="refined-section-${index}" class="hidden w-full" data-captain-intel=""></div>
+                                <div id="quartermaster-btn-container-${index}" class="mt-2 text-center hidden">
+                                    <button id="quartermaster-btn-${index}" onclick="getQuartermasterReview('${homeTeamJs}', '${awayTeamJs}', ${index})" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">See Quartermaster's Ledger</button>
+                                </div>
+                                <div id="quartermaster-section-${index}" class="hidden w-full"></div>
+                            </div>
+                        </div>
+                    `;
+                 }).join('');
+            }
+
+            // Disable add buttons if pack is full
+            document.querySelectorAll('.add-btn').forEach(btn => {
+                btn.disabled = analysisPack.length >= ANALYSIS_PACK_LIMIT;
+                if (btn.disabled) {
+                    btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                }
             });
-            html += '</div>';
-            fixturesContainer.innerHTML = html;
         }
 
         function toggleFixtureDetails(index) {
@@ -778,7 +849,6 @@
             const content = document.getElementById(`toggle-content-${index}`);
             const icon = document.getElementById(`toggle-icon-${index}`);
 
-            // Ensure the content area is visible when starting a prediction
             if (content.classList.contains('hidden')) {
                 content.classList.remove('hidden');
                 icon.style.transform = 'rotate(180deg)';
@@ -787,7 +857,6 @@
             const predictionEl = document.getElementById(`prediction-${index}`);
             predictionEl.innerHTML = '<div class="flex items-center justify-center"><div class="spinner"></div></div>';
             
-            // Hide all subsequent sections when a new prediction is run
             document.getElementById(`reasoning-${index}`).classList.add('hidden');
             document.getElementById(`refine-btn-container-${index}`).classList.add('hidden');
             document.getElementById(`refined-section-${index}`).classList.add('hidden');
@@ -881,7 +950,6 @@
             refinedSection.innerHTML = '<div class="flex items-center text-sm text-gray-500"><div class="spinner mr-2"></div>Listening to tavern rumors...</div>';
             refinedSection.classList.remove('hidden');
             
-            // Hide the quartermaster sections until ready
             document.getElementById(`quartermaster-btn-container-${index}`).classList.add('hidden');
             document.getElementById(`quartermaster-section-${index}`).classList.add('hidden');
 
@@ -940,10 +1008,8 @@
                 const jsonString = textResponse.replace(/```json|```/g, '').trim();
                 const analysis = JSON.parse(jsonString);
                 
-                // --- Store data for quartermaster ---
                 refinedSection.dataset.captainIntel = JSON.stringify(analysis);
                 
-                // Use the single sentiment adjustment factor directly. Default to 0 if missing or invalid.
                 const sentimentAdjustment = parseFloat(analysis.sentimentAdjustment) || 0.0;
                 const adjustment = sentimentAdjustment * dynamicAdjustmentFactor; 
                 
@@ -966,7 +1032,7 @@
 
                     if (values.length > 0) {
                         const bestValue = values.reduce((best, current) => current.value > best.value ? current : best, {value: -Infinity});
-                        const valueThreshold = 0.05; // 5%
+                        const valueThreshold = 0.05;
 
                         const finalProbs = { 'Home Win': final_p_h, 'Draw': final_p_d, 'Away Win': final_p_a };
                         const mostLikelyOutcome = Object.keys(finalProbs).reduce((a, b) => finalProbs[a] > finalProbs[b] ? a : b);
@@ -1024,7 +1090,6 @@
                     </div>
                 `;
                 
-                // Enable Quartermaster button on success
                 document.getElementById(`quartermaster-btn-container-${index}`).classList.remove('hidden');
 
             } catch(e) { 
@@ -1033,7 +1098,6 @@
             }
         }
         
-        // --- NEW QUARTERMASTER FUNCTION ---
         async function getQuartermasterReview(homeTeam, awayTeam, index) {
             const apiKey = apiKeyInput.value;
             if (!apiKey) { 
@@ -1045,7 +1109,6 @@
             quartermasterSection.innerHTML = '<div class="flex items-center text-sm text-gray-500"><div class="spinner mr-2"></div>The Quartermaster is reviewing the reports...</div>';
             quartermasterSection.classList.remove('hidden');
 
-            // Retrieve data from previous steps stored in DOM attributes
             const predictionEl = document.getElementById(`prediction-${index}`);
             const refinedSection = document.getElementById(`refined-section-${index}`);
             const krakenProbsJSON = predictionEl.dataset.predictionValues;
@@ -1088,7 +1151,6 @@
 
             try {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                // Note: No tool call needed here as all info is provided in the prompt, but keeping a model that supports search can be useful.
                 const payload = { contents: [{ parts: [{ text: prompt }] }] }; 
                 const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!response.ok) { throw new Error(`API Error: ${(await response.json()).error.message}`); }
@@ -1097,7 +1159,6 @@
                 const jsonString = textResponse.replace(/```json|```/g, '').trim();
                 const review = JSON.parse(jsonString);
 
-                // Display the Quartermaster's review
                 let confidenceColor = 'text-gray-700';
                 if (review.confidence === 'Very High') confidenceColor = 'text-green-700';
                 else if (review.confidence === 'High') confidenceColor = 'text-green-600';
@@ -1152,3 +1213,4 @@
     </script>
 </body>
 </html>
+
