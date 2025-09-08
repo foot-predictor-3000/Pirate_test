@@ -969,10 +969,10 @@
                         const valueThreshold = 0.05; // 5%
 
                         if (bestValue.value > valueThreshold) {
-                            valueHtml = `<p>The Captain smells treasure in the <b>${bestValue.outcome}</b> market!</p>
-                                        <p class="text-xs">The Kraken's probability (${(bestValue.prob * 100).toFixed(1)}%) be <b>${(bestValue.value * 100).toFixed(1)}%</b> higher than the bookies' implied odds (${(bestValue.implied * 100).toFixed(1)}%).</p>`;
+                            valueHtml = `<p>The Captain spies treasure in the <b>${bestValue.outcome}</b> bet!</p>
+                                        <p class="text-xs">The Kraken's probability (${(bestValue.prob * 100).toFixed(1)}%) be <b>${(bestValue.value * 100).toFixed(1)}%</b> higher than the bookies' offering (${(bestValue.implied * 100).toFixed(1)}%).</p>`;
                         } else {
-                            valueHtml = "<p>No treasure here, matey. The bookies' odds be tight (no value > 5%).</p>";
+                            valueHtml = "<p>No treasure here, matey. The bookies' odds be tight.</p>";
                         }
                     } else {
                         valueHtml = '<p>Could not perform value analysis. The odds charts be missing.</p>';
@@ -1009,7 +1009,7 @@
                             <div class="flex justify-between items-center"> <span class="font-semibold text-green-800">Captain's Refined Prediction:</span> <span class="font-bold text-right text-gray-900"> H: <b class="text-blue-600">${Math.round(final_p_h*100)}%</b>, D: <b class="text-gray-600">${Math.round(final_p_d*100)}%</b>, A: <b class="text-red-600">${Math.round(final_p_a*100)}%</b> </span> </div>
                         </div>
                         <div class="bg-teal-100 border-l-4 border-teal-500 text-teal-700 p-3 rounded-md">
-                            <h4 class="font-bold">Treasure Hunt Analysis</h4>
+                            <h4 class="font-bold">Treasure Hunt</h4>
                             ${valueHtml}
                         </div>
                         <div class="bg-indigo-100 border-l-4 border-indigo-500 text-indigo-700 p-3 rounded-md">
